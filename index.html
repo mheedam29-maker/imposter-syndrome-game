@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Imposter Syndrom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f6efe6;
+            --ink2: #c9bfd8;
+            --night: #17132b;
+            --panel: rgba(20,16,40,.82);
+            --line: rgba(246,239,230,.22);
+            --accent: #ffb86b;
+            --accent2: #ff7a8a;
+            --bg1: #3a2a52;
+            --bg2: #d98a5f;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top,0px);
+            padding-bottom: env(safe-area-inset-bottom,0px);
+        }
+
+        *, *::before, *::after {
+            box-sizing: inherit
+        }
+
+        html {
+            height: 100%;
+            scroll-padding-top: env(safe-area-inset-top,0px)
+        }
+
+        body {
+            margin: 0;
+            min-height: 100%;
+            background: var(--night);
+            color: var(--ink);
+            font-family: "Noto Sans Thai",system-ui,sans-serif;
+            line-height: 1.7
+        }
+
+        #stage {
+            position: relative;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: linear-gradient(170deg,var(--bg1),var(--bg2));
+            transition: background 1.2s ease
+        }
+
+            #stage::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(60% 45% at 78% 18%,rgba(255,236,190,.35),transparent 70%);
+                pointer-events: none
+            }
+
+        #hud {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            font-size: .9rem;
+            color: var(--ink2)
+        }
+
+        #bar {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,.18);
+            overflow: hidden
+        }
+
+            #bar i {
+                display: block;
+                height: 100%;
+                width: 0;
+                background: var(--accent);
+                transition: width .6s ease
+            }
+
+        #clock {
+            font-family: Mitr,sans-serif;
+            color: var(--ink);
+            min-width: 5.5em;
+            text-align: right
+        }
+
+        #art {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px
+        }
+
+        #icon {
+            font-size: clamp(5rem,22vw,9rem);
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,.4));
+            transition: opacity .5s,transform .8s
+        }
+
+        .out #icon {
+            opacity: 0;
+            transform: translateY(10px) scale(.96)
+        }
+
+        #box {
+            position: relative;
+            margin: 0 auto;
+            width: min(100%,720px);
+            padding: 0 14px 18px
+        }
+
+        #card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 20px 20px 16px;
+            backdrop-filter: blur(6px)
+        }
+
+        #mood {
+            margin: 0 0 6px;
+            font-size: .85rem;
+            color: var(--accent)
+        }
+
+        #text {
+            margin: 0;
+            font-size: 1.08rem;
+            min-height: 5.2em;
+            max-width: 62ch
+        }
+
+        #choices {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px
+        }
+
+        .btn {
+            font: inherit;
+            text-align: left;
+            color: var(--ink);
+            background: rgba(255,255,255,.07);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 13px 15px;
+            cursor: pointer;
+            line-height: 1.55;
+            transition: background .2s,border-color .2s,transform .15s
+        }
+
+            .btn:hover {
+                background: rgba(255,184,107,.16);
+                border-color: var(--accent)
+            }
+
+            .btn:active {
+                transform: scale(.99)
+            }
+
+            .btn:focus-visible {
+                outline: 3px solid var(--accent);
+                outline-offset: 2px
+            }
+
+            .btn.go {
+                text-align: center;
+                background: var(--accent);
+                color: #2a1a10;
+                font-weight: 600;
+                border-color: transparent
+            }
+
+                .btn.go:hover {
+                    background: #ffc88f
+                }
+
+        .fade {
+            transition: opacity .45s
+        }
+
+        .out .fade {
+            opacity: 0
+        }
+
+        h1, h2 {
+            font-family: Mitr,sans-serif;
+            font-weight: 500;
+            margin: 0 0 8px;
+            line-height: 1.3
+        }
+
+        h1 {
+            font-size: clamp(1.7rem,6vw,2.5rem)
+        }
+
+        #result {
+            display: none;
+            position: relative;
+            width: min(100%,720px);
+            margin: 0 auto;
+            padding: 6px 16px 40px
+        }
+
+        .res .hud, .res #art, .res #box {
+            display: none
+        }
+
+        .res #result {
+            display: block
+        }
+
+        .res #hud {
+            display: none
+        }
+
+        .tier {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 22px
+        }
+
+        .score {
+            font-family: Mitr,sans-serif;
+            font-size: 3.2rem;
+            line-height: 1;
+            color: var(--accent)
+        }
+
+        .scale {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 4px;
+            margin: 14px 0 4px
+        }
+
+            .scale span {
+                height: 8px;
+                border-radius: 4px;
+                background: rgba(255,255,255,.18)
+            }
+
+                .scale span.on {
+                    background: var(--accent)
+                }
+
+        .facts {
+            margin: 18px 0 0;
+            padding: 20px 22px;
+            border-radius: 18px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid var(--line)
+        }
+
+            .facts ul {
+                margin: 8px 0 0;
+                padding-left: 1.2em
+            }
+
+            .facts li {
+                margin: 7px 0
+            }
+
+        .note {
+            margin: 16px 0;
+            font-size: .92rem;
+            color: var(--ink2)
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px
+        }
+
+            .row .btn {
+                text-align: center
+            }
+
+        #landing {
+            display: none;
+            position: relative;
+            width: min(100%,720px);
+            margin: 0 auto;
+            padding: 28px 18px 40px
+        }
+
+        .land #hud, .land #art, .land #box {
+            display: none
+        }
+
+        .land #landing {
+            display: block
+        }
+
+        #landing .big {
+            font-size: clamp(4rem,18vw,6.5rem);
+            line-height: 1;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,.4));
+            margin-bottom: 10px
+        }
+
+        #landing .lead {
+            font-size: 1.12rem;
+            margin: 0 0 18px;
+            max-width: 52ch
+        }
+
+        .infos {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 16px
+        }
+
+        .info {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px 16px
+        }
+
+            .info h2 {
+                font-size: 1.05rem;
+                margin: 0 0 2px;
+                color: var(--accent)
+            }
+
+            .info p {
+                margin: 0
+            }
+
+        .what {
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px dashed var(--line);
+            margin: 0 0 20px;
+            color: var(--ink2);
+            font-size: .95rem
+        }
+
+            .what b {
+                color: var(--ink)
+            }
+
+        #landing .btn.go {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 15px
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            * {
+                transition: none !important
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="stage">
+        <div id="hud"><span id="step"></span><div id="bar"><i></i></div><span id="clock"></span></div>
+        <div id="art"><div id="icon" aria-hidden="true">⏰</div></div>
+        <div id="box">
+            <div id="card">
+                <p id="mood" class="fade"></p>
+                <p id="text" class="fade" aria-live="polite"></p>
+                <div id="choices" class="fade"></div>
+            </div>
+        </div>
+        <div id="landing">
+            <div class="big" aria-hidden="true">🪞</div>
+            <h1>คุณมี Imposter Syndrom หรือเปล่า?</h1>
+            <p class="lead">แบบสำรวจตัวเองในรูปแบบเกม ลองใช้ชีวิต 1 วัน แล้วดูว่าเสียงในใจของคุณพูดอะไรเมื่อเจอคำชม ความผิดพลาด และความสำเร็จ</p>
+            <div class="infos">
+                <div class="info"><h2>ใช้เวลาประมาณ 3 นาที</h2><p>6 ฉากสั้น ๆ แต่ละฉากเลือกคำตอบ 1 ข้อ แล้วดูผลสรุปตอนจบ</p></div>
+                <div class="info"><h2>ไม่มีคำตอบถูกหรือผิด</h2><p>เลือกข้อที่ใกล้เคียงกับสิ่งที่คุณจะทำหรือรู้สึกจริง ๆ ไม่ใช่สิ่งที่อยากให้เป็น</p></div>
+                <div class="info"><h2>ไม่เก็บข้อมูลของคุณ</h2><p>คำตอบทั้งหมดคำนวณอยู่ในหน้านี้ ไม่มีการส่งไปที่ไหน</p></div>
+            </div>
+            <p class="what"><b>Imposter Syndrome คืออะไร?</b> คือความรู้สึกว่าตัวเองไม่เก่งจริง ทั้งที่มีความสามารถ และกลัวว่าสักวันคนอื่นจะจับได้ มักคิดว่าความสำเร็จมาจากโชค <b>ไม่ใช่โรค</b> และเกมนี้ <b>ไม่ใช่การวินิจฉัย</b> เป็นเพียงภาพสะท้อนคร่าว ๆ ให้คุณเข้าใจตัวเองมากขึ้น</p>
+            <button class="btn go" id="startBtn">เริ่มสำรวจตัวเอง</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+const S=[
+         {icon:"⏰",time:"",bg:["#3a2a52","#e0905f"],mood:"ห้องนอนตอนเช้า แสงแดดส่องผ่านหน้าต่าง",
+          text:"เสียงนาฬิกาปลุกดังขึ้น... วันนี้เป็นวันสำคัญที่คุณต้องออกไปใช้ชีวิตข้างนอก การเดินทางใน 1 วันกำลังจะเริ่มต้นขึ้น ทุกการตัดสินใจของคุณต่อจากนี้ จะสะท้อน “เสียงลึกลับ” ที่ซ่อนอยู่ลึก ๆ ในใจคุณออกมา",
+          start:"เริ่มต้นวันใหม่กันเลย"},
+         {icon:"🪞",time:"08:30 น.",bg:["#2d2a55","#c97a8a"],mood:"หน้ากระจกก่อนออกจากบ้าน",
+          text:"คุณเพิ่งลองแต่งตัวสไตล์ใหม่ที่จัดเต็มกว่าปกติเล็กน้อย พอเดินมาถึงป้ายรถเมล์ คุณสังเกตเห็นว่าคนรอบ ๆ หันมามองคุณอย่างพร้อมเพรียงกัน...",
+          c:["ยิ้มมุมปาก เชิดหน้าเดินต่ออย่างมั่นใจ วันนี้เราเท่ชะมัด!","แอบก้มเช็กกระดุมและซิปกางเกงเงียบ ๆ พอเห็นว่าปกติก็เดินต่อ","แอบหยิบมือถือมาเปิดกล้องหน้าส่องสลับไปมา “หรือเสื้อตัวนี้มันจะแปลกไปนะ?”","ตัวแข็งทื่อ ดึงเสื้อคลุมมาปิดไว้ ในหัวคิดว่าคนมองเพราะแต่งตัวตลก อยากกลับบ้านไปเปลี่ยนชุดทันที"]},
+         {icon:"🍜",time:"12:15 น.",bg:["#4a2f3c","#e6a45c"],mood:"ร้านข้าวเที่ยง คนพลุกพล่าน เสียงจานชามกระทบกัน",
+          text:"คุณเดินเข้าไปสั่งเมนูเดิมที่ร้านประจำ พนักงานเสิร์ฟที่คุ้นหน้าเงยหน้าขึ้นมาเห็นแล้วยิ้มทักทายเสียงดังว่า “โห! วันนี้แต่งตัวดีมากเลย ดูดีสุด ๆ ไปเลย!” คนในร้านบางส่วนหันมามองคุณ...",
+          c:["“ขอบคุณครับ/ค่ะ!” ยิ้มกว้างรับคำชมอย่างจริงใจแล้วสั่งอาหารต่อ","ยิ้มแห้ง ๆ โบกมือปฏิเสธ “ไม่ขนาดนั้นหรอกครับ เสื้อเซลล์น่ะครับ”","หัวเราะแก้เขิน แต่ในใจเริ่มคิดฟุ้งซ่านว่า “เขาพูดประชดหรือเปล่า หรือเราดูพยายามมากเกินไป?”","ไม่ยอมสบตา รีบตัดบทสั่งข้าวเสียงเบา ลึก ๆ รู้สึกแย่เพราะคิดว่าตัวเองหน้าตาธรรมดาเกินกว่าจะได้รับคำชมนี้"]},
+         {icon:"📧",time:"14:45 น.",bg:["#1f2a4a","#d9625f"],mood:"หน้าจอมีไอคอนแจ้งเตือนสีแดงกะพริบ",
+          text:"ติ๊ง! มีอีเมลหรือข้อความเด้งขึ้นมา งานที่คุณเพิ่งส่งไปเมื่อเช้าถูกตีกลับเพราะคุณ “ลืมแนบไฟล์สำคัญ” หรือ “ลืมลงชื่อ” ทำให้ต้องกดส่งใหม่อีกรอบ...",
+          c:["อ้าว ลืมเฉย ๆ ร้อง “อุ๊ย” คำหนึ่ง แล้วกดแนบไฟล์ส่งใหม่ขำ ๆ ปิดจอไปทำอย่างอื่นต่อ","ถอนหายใจ “เฮ้อ ซุ่มซ่ามจัง” รีบกดยัดไฟล์ส่งใหม่แบบเซ็งตัวเองนิดหน่อย","หน้าถอดสี รีบเช็กไฟล์อื่น ๆ ทั้งหมดวนรอบสอง กลัวว่าคนปลายทางจะมองว่าเราทำงานไม่โปร","มือสั่น ใจดิ่งไปที่ตาตุ่ม ในหัวมีเสียงด่าตัวเองว่า “นั่นไง ความห่วยแตกแกโผล่แล้ว แกมันไม่ได้เรื่องเลยจริง ๆ”"]},
+         {icon:"☕",time:"17:00 น.",bg:["#2b2446","#b9805f"],mood:"วงกาแฟตอนเย็น รายล้อมด้วยผู้คนที่ดูฉะฉาน",
+          text:"คุณต้องเข้าไปนั่งอยู่ในวงสนทนาของกลุ่มคนที่ดูโปรไฟล์ดีมาก ๆ พวกเขากำลังถกเถียงเรื่องเทรนด์โลก การลงทุน หรือวิชาการขั้นสูง จู่ ๆ มีคนหนึ่งหันมาสบตาคุณแล้วถามว่า “แล้วคุณล่ะ คิดยังไงกับประเด็นนี้บ้าง?”",
+          c:["พูดแชร์มุมมองที่ตัวเองมีตรง ๆ ถ้านึกไม่ออกก็บอก “เรื่องนี้ไม่แม่นเลย แต่อยากฟังต่อครับ/ค่ะ” อย่างมั่นใจ","เรียบเรียงคำพูดอย่างระวัง เลือกพูดเฉพาะข้อมูลเซฟ ๆ ที่มั่นใจชัวร์ ๆ เพื่อไม่ให้หน้าแตก","ยิ้มแห้ง ๆ เออออตามน้ำไปกับสิ่งที่คนก่อนหน้าพูด เพราะกลัวว่าถ้าพูดความคิดตัวเองออกไปจะดูโง่","ใจสั่นเหงื่อซึม ก้มหน้ามองแก้วน้ำ คิดในใจว่า “อย่าถามฉันเลย ฉันมันกลวง ไม่มีอะไรในหัวเลย หลุดมาตรงนี้ได้ไง”"]},
+         {icon:"🎉",time:"20:00 น.",bg:["#2a1f4d","#e58a6d"],mood:"ห้องนั่งเล่นอบอุ่น เสียงหัวเราะของเพื่อน",
+          text:"คุณเพิ่งเล่นเกมชนะ ทำอาหารอร่อยมาก หรือช่วยแก้ปัญหาใหญ่ให้เพื่อนได้สำเร็จ เพื่อนทุกคนตบมือให้คุณแล้วชมว่า “เจ๋งว่ะ! ถ้าไม่มีคุณวันนี้นะ แย่แน่ ๆ เลย!”",
+          c:["แปะมือไฮไฟฟ์กับเพื่อน “แน่นอนอยู่แล้วระดับนี้!” หัวเราะฮาเฮและรับความดีความชอบเต็ม ๆ","ยิ้มถ่อมตัว “เฮ้ย ดวงดีเฉย ๆ หรอก ตานี้โชคช่วย บวกกับพวกเธอช่วยกันด้วยแหละ”","ยิ้มรับแต่เริ่มรู้สึกกดดันลึก ๆ ในใจ “ถ้าครั้งหน้าพลาดขึ้นมา พวกเขาต้องรู้แน่ ๆ ว่าตานี้แค่ฟลุ๊ค”","รู้สึกอึดอัด อับอายลึก ๆ เหมือนตัวเองไปโกงความสำเร็จคนอื่นมา ทั้งที่จริง ๆ คิดว่าตัวเองไม่ได้ช่วยอะไรเลย"]}
+];
+const T=[
+         {max:8,name:"สายมั่นสตรอง มองโลกตามจริง",d:"คุณแทบไม่มีเสียงของ Imposter Syndrome ในใจเลย คุณใช้ชีวิตอย่างผ่อนคลายและยอมรับตัวเองได้ดีมาก"},
+         {max:12,name:"สายถ่อมตน ปรับตัวตามสังคม",d:"คุณมีความคิดเล็กคิดน้อยและแอบประหม่าบ้างเป็นธรรมดา แต่ไม่ได้แบกมันไว้จนเสียศูนย์"},
+         {max:16,name:"สายแบกโลก แอบวิตกกังวล",d:"คุณมีพฤติกรรมของ Imposter Syndrome ซ่อนอยู่บ่อยครั้ง คุณมักปฏิเสธความเก่งของตัวเองและระแวงสายตาคนอื่น"},
+         {max:20,name:"สายวิกฤต แบกความรู้สึกคนลวงโลก",d:"คุณกำลังถูกความรู้สึกแบบ Imposter Syndrome เล่นงานอย่างหนักในชีวิตประจำวัน ความมั่นใจดิ่งต่ำและด่าตัวเองในใจตลอดเวลา ถึงเวลาที่ต้องเริ่มใจดีกับตัวเองได้แล้วนะ"}
+];
+const $=id=>document.getElementById(id),stage=$("stage");
+let i=0,score=0,typing=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.random()*(k+1)|0;[a[k],a[j]]=[a[j],a[k]]}return a};
+
+async function show(n){
+          i=n;const s=S[n];
+          stage.classList.add("out");await sleep(450);
+          stage.style.setProperty("--bg1",s.bg[0]);stage.style.setProperty("--bg2",s.bg[1]);
+          $("icon").textContent=s.icon;$("clock").textContent=s.time;
+          $("step").textContent=n?`${n}/5`:"";
+          $("bar").firstElementChild.style.width=(n/5*100)+"%";
+          $("mood").textContent=s.mood;$("text").textContent="";$("choices").innerHTML="";
+          stage.classList.remove("out");
+          await type(s.text);
+          const box=$("choices");
+          if(s.start){const b=btn(s.start,()=>show(1));b.classList.add("go");box.append(b);b.focus()}
+          else shuffle(s.c.map((t,k)=>({t,p:k+1}))).forEach(o=>box.append(btn(o.t,()=>pick(o.p))));
+}
+function btn(t,f){const b=document.createElement("button");b.className="btn";b.textContent=t;b.onclick=f;return b}
+function type(str){
+          return new Promise(res=>{
+            const el=$("text"),skip=matchMedia("(prefers-reduced-motion:reduce)").matches;
+            if(skip){el.textContent=str;return res()}
+            const chars=[...str];let k=0;
+            const done=()=>{clearInterval(typing);el.textContent=str;$("card").onclick=null;res()};
+            typing=setInterval(()=>{el.textContent=chars.slice(0,++k).join("");if(k>=chars.length)done()},22);
+            $("card").onclick=done;
+          });
+}
+function pick(p){score+=p;i<5?show(i+1):finish()}
+
+async function finish(){
+          stage.classList.add("out");await sleep(450);
+          const t=T.find(x=>score<=x.max),lvl=T.indexOf(t);
+          $("result").innerHTML=`
+           <div class="tier">
+             <p style="margin:0 0 6px;color:var(--ink2)">คะแนนรวมของคุณ</p>
+             <div class="score">${score}<span style="font-size:1.2rem;color:var(--ink2)"> / 20</span></div>
+             <div class="scale">${T.map((_,k)=>`<span class="${k<=lvl?"on":""}"></span>`).join("")}</div>
+             <h2 style="margin-top:14px">${t.name}</h2>
+             <p style="margin:0">${t.d}</p>
+           </div>
+           <div class="facts">
+             <h2 style="font-size:1.2rem">ข้อมูลที่ควรรู้เกี่ยวกับ Imposter Syndrome</h2>
+             <ul>
+               <li><b>ไม่ใช่โรคทางจิตเวช</b> ไม่ได้อยู่ในเกณฑ์วินิจฉัยของ DSM-5 หรือ ICD เป็นรูปแบบความคิดและความรู้สึก ที่นักจิตวิทยา Pauline Clance และ Suzanne Imes เรียกว่า “Imposter Phenomenon” ในปี 1978</li>
+               <li><b>พบได้บ่อย</b> งานวิจัยจำนวนมากพบว่าคนจำนวนมากเคยรู้สึกแบบนี้ในบางช่วงชีวิต โดยเฉพาะตอนเริ่มบทบาทใหม่ เช่น เข้ามหาวิทยาลัยหรือเริ่มงาน และเกิดได้ในคนที่มีผลงานดีจริง</li>
+               <li><b>ลักษณะที่พบบ่อย</b> คือรู้สึกว่าความสำเร็จมาจากโชคหรือจังหวะ กลัวถูกจับได้ว่าไม่เก่งจริง และตั้งมาตรฐานกับตัวเองสูงมาก</li>
+               <li><b>มักสัมพันธ์กับ</b> ความวิตกกังวล ความเครียด และความสมบูรณ์แบบ ถ้าเป็นหนักและต่อเนื่อง จนกระทบการเรียน การงาน หรือการนอน ควรคุยกับนักจิตวิทยาหรือจิตแพทย์</li>
+               <li><b>ช่วยตัวเองได้</b> แยก “ความรู้สึก” ออกจาก “ข้อเท็จจริง” จดผลงานและคำชมที่ได้รับ ฝึกรับคำชมโดยไม่ปฏิเสธทันที และเล่าให้คนที่ไว้ใจฟัง เพราะหลายคนรู้สึกเหมือนกันโดยไม่มีใครพูดออกมา</li>
+             </ul>
+           </div>
+           <p class="note">เกมนี้เป็นแค่การสำรวจเพื่อความเข้าใจตัวเอง ไม่ใช่แบบทดสอบมาตรฐานและไม่ใช่การวินิจฉัย แบบประเมินที่ใช้ในงานวิจัยคือ Clance Impostor Phenomenon Scale หากรู้สึกแย่มากหรือคิดทำร้ายตัวเอง โปรดติดต่อผู้เชี่ยวชาญหรือสายด่วนสุขภาพจิต 1323 (ประเทศไทย) ทันที</p>
+           <div class="row"><button class="btn go" id="again">เล่นอีกครั้ง</button></div>`;
+          $("again").onclick=()=>{score=0;stage.classList.remove("res");stage.classList.add("land");scrollTo(0,0)};
+          stage.classList.add("res");stage.style.setProperty("--bg1","#2a2146");stage.style.setProperty("--bg2","#c7805f");
+          stage.classList.remove("out");scrollTo(0,0);
+}
+stage.classList.add("land");
+$("startBtn").onclick=()=>{stage.classList.remove("land");show(0)};
+    </script>
+</body>
+</html>
